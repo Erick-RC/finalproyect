@@ -9,8 +9,21 @@ export const DataContextProvider = ({ children }) => {
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
   const [weatherData, setWeatherData] = useState({
-    temp: 0, description: "", iconId: "", windStatus: "", windDegree: "", windDirection: "",
-    visibility: "", humidity: "", airPressure: "", todays: ""
+    temp: 0,
+    description: "",
+    iconId: "",
+    windStatus: "",
+    windDegree: "",
+    windDirection: "",
+    visibility: "",
+    humidity: "",
+    airPressure: "",
+    todays: "",
+  });
+  const [lastWindData, setLastWindData] = useState({
+    windStatus: "",
+    windDegree: "",
+    windDirection: "",
   });
   const [list, setList] = useState([]);
   const [location, setLocation] = useState("New York");
@@ -22,8 +35,24 @@ export const DataContextProvider = ({ children }) => {
     new Date(timestamp * 1000).toUTCString().split(" ").slice(0, 3).join(" ");
 
   const degToCompass = (num) =>
-    ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW",
-      "W", "WNW", "NW", "NNW"][Math.floor((num / 22.5) + 0.5) % 16];
+    [
+      "N",
+      "NNE",
+      "NE",
+      "ENE",
+      "E",
+      "ESE",
+      "SE",
+      "SSE",
+      "S",
+      "SSW",
+      "SW",
+      "WSW",
+      "W",
+      "WNW",
+      "NW",
+      "NNW",
+    ][Math.floor((num / 22.5) + 0.5) % 16];
 
   const fetchLocation = async (url) => {
     try {
@@ -38,6 +67,7 @@ export const DataContextProvider = ({ children }) => {
 
   const updateWeatherData = (data) => {
     if (!data) return;
+
     const { main, weather, wind, visibility, coord, dt } = data;
     const updatedWeatherData = {
       temp: Math.round(main.temp),
@@ -48,13 +78,23 @@ export const DataContextProvider = ({ children }) => {
       airPressure: main.pressure,
       todays: getDay(dt),
     };
-  
-    if (wind) {
+
+    if (wind && wind.speed) {
       updatedWeatherData.windStatus = wind.speed.toFixed(1);
       updatedWeatherData.windDegree = wind.deg;
       updatedWeatherData.windDirection = degToCompass(wind.deg);
+      setLastWindData({
+        windStatus: wind.speed.toFixed(1),
+        windDegree: wind.deg,
+        windDirection: degToCompass(wind.deg),
+      });
+    } else if (lastWindData.windStatus) {
+      // Si no hay datos nuevos de viento, conservar los últimos datos válidos
+      updatedWeatherData.windStatus = lastWindData.windStatus;
+      updatedWeatherData.windDegree = lastWindData.windDegree;
+      updatedWeatherData.windDirection = lastWindData.windDirection;
     }
-  
+
     setWeatherData(updatedWeatherData);
     setLat(coord.lat);
     setLon(coord.lon);
@@ -63,8 +103,8 @@ export const DataContextProvider = ({ children }) => {
   const updateForecastData = (data) => {
     if (!data || !data.list) return;
     const forecastList = data.list;
-    const uniqueDays = Array.from(new Set(forecastList.map(item => item.dt_txt.split(" ")[0])))
-      .map(date => forecastList.find(item => item.dt_txt.startsWith(date)));
+    const uniqueDays = Array.from(new Set(forecastList.map((item) => item.dt_txt.split(" ")[0])))
+      .map((date) => forecastList.find((item) => item.dt_txt.startsWith(date)));
     setList(uniqueDays);
   };
 
@@ -108,13 +148,15 @@ export const DataContextProvider = ({ children }) => {
 
   useEffect(() => {
     if (lat && lon) {
-      const fetchWeatherData = () => fetchLocation(
-        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=${unit}&appid=${API_KEY}`
-      ).then(updateWeatherData);
+      const fetchWeatherData = () =>
+        fetchLocation(
+          `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=${unit}&appid=${API_KEY}`
+        ).then(updateWeatherData);
 
-      const fetchForecastData = () => fetchLocation(
-        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${unit}&appid=${API_KEY}`
-      ).then(updateForecastData);
+      const fetchForecastData = () =>
+        fetchLocation(
+          `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${unit}&appid=${API_KEY}`
+        ).then(updateForecastData);
 
       fetchWeatherData();
       fetchForecastData();
@@ -122,7 +164,18 @@ export const DataContextProvider = ({ children }) => {
   }, [lat, lon, unit]);
 
   const contextValue = useMemo(
-    () => ({...weatherData,list,unit,setUnit,location,setLocation,lat,lon,locationArray,getCurrentLocation,}),
+    () => ({
+      ...weatherData,
+      list,
+      unit,
+      setUnit,
+      location,
+      setLocation,
+      lat,
+      lon,
+      locationArray,
+      getCurrentLocation,
+    }),
     [weatherData, list, unit, location, lat, lon, locationArray]
   );
 
