@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect, useMemo } from "react";
 
 export const DataContext = createContext(null);
 
+const API_KEY = "969abeac77cc739597db7e76a82eb5e8"
+
 export const DataContextProvider = ({ children }) => {
   const [unit, setUnit] = useState("metric");
   const [lat, setLat] = useState("");
@@ -19,7 +21,7 @@ export const DataContextProvider = ({ children }) => {
     todays: "",
   });
   const [list, setList] = useState([]);
-  const [location, setLocation] = useState("New York"); // Ubicación predeterminada
+  const [location, setLocation] = useState("New York"); 
   const [locationArray, setLocationArray] = useState(() =>
     JSON.parse(localStorage.getItem("locations")) || []
   );
@@ -60,7 +62,7 @@ export const DataContextProvider = ({ children }) => {
   };
 
   const updateWeatherData = (data) => {
-    if (!data) return; // No hacer nada si no hay datos
+    if (!data) return; 
     setWeatherData((prevData) => ({
       ...prevData,
       temp: Math.round(data.main.temp),
@@ -85,7 +87,7 @@ export const DataContextProvider = ({ children }) => {
           setLat(latitude);
           setLon(longitude);
           fetchLocation(
-            `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&appid=969abeac77cc739597db7e76a82eb5e8`
+            `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&appid=${API_KEY}`
           )
             .then(([result]) => result && setLocation(result.name))
             .catch((error) => console.error("Error fetching location:", error));
@@ -107,7 +109,7 @@ export const DataContextProvider = ({ children }) => {
   useEffect(() => {
     if (location) {
       fetchLocation(
-        `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=${unit}&appid=969abeac77cc739597db7e76a82eb5e8`
+        `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=${unit}&appid=${API_KEY}`
       )
         .then(updateWeatherData)
         .catch((error) =>
@@ -119,7 +121,7 @@ export const DataContextProvider = ({ children }) => {
   useEffect(() => {
     if (lat && lon) {
       fetchLocation(
-        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${unit}&appid=969abeac77cc739597db7e76a82eb5e8`
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${unit}&appid=${API_KEY}`
       )
         .then(({ list: forecastList }) => {
           const uniqueDays = Array.from(new Set(forecastList.map(item => item.dt_txt.split(" ")[0])))
