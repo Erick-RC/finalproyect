@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useMemo } from "react";
+import React, { createContext, useState, useEffect, useMemo } from "react";
 
 export const DataContext = createContext(null);
 
@@ -24,12 +24,34 @@ export const DataContextProvider = ({ children }) => {
     JSON.parse(localStorage.getItem("locations")) || []
   );
 
-  const getDay = (timestamp) => new Date(timestamp * 1000).toUTCString().split(" ").slice(0, 3).join(" ");
-  const degToCompass = (num) => ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"][Math.floor(num / 22.5 + 0.5) % 16];
+  const getDay = (timestamp) =>
+    new Date(timestamp * 1000).toUTCString().split(" ").slice(0, 3).join(" ");
+  const degToCompass = (num) =>
+    [
+      "N",
+      "NNE",
+      "NE",
+      "ENE",
+      "E",
+      "ESE",
+      "SE",
+      "SSE",
+      "S",
+      "SSW",
+      "SW",
+      "WSW",
+      "W",
+      "WNW",
+      "NW",
+      "NNW",
+    ][Math.floor((num / 22.5) + 0.5) % 16];
 
   const fetchLocation = async (url) => {
     try {
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
       return await response.json();
     } catch (error) {
       console.error(error);
@@ -38,7 +60,9 @@ export const DataContextProvider = ({ children }) => {
   };
 
   const updateWeatherData = (data) => {
-    setWeatherData({
+    if (!data) return; // No hacer nada si no hay datos
+    setWeatherData((prevData) => ({
+      ...prevData,
       temp: Math.round(data.main.temp),
       description: data.weather[0].main,
       iconId: data.weather[0].icon,
@@ -49,7 +73,7 @@ export const DataContextProvider = ({ children }) => {
       humidity: data.main.humidity,
       airPressure: data.main.pressure,
       todays: getDay(data.dt),
-    });
+    }));
     setLat(data.coord.lat);
     setLon(data.coord.lon);
   };
@@ -60,8 +84,11 @@ export const DataContextProvider = ({ children }) => {
         ({ coords: { latitude, longitude } }) => {
           setLat(latitude);
           setLon(longitude);
-          fetchLocation(`https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&appid=969abeac77cc739597db7e76a82eb5e8`)
-            .then(([result]) => result && setLocation(result.name));
+          fetchLocation(
+            `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&appid=969abeac77cc739597db7e76a82eb5e8`
+          )
+            .then(([result]) => result && setLocation(result.name))
+            .catch((error) => console.error("Error fetching location:", error));
         },
         (error) => console.error(error),
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
@@ -79,34 +106,47 @@ export const DataContextProvider = ({ children }) => {
 
   useEffect(() => {
     if (location) {
-      fetchLocation(`https://api.openweathermap.org/data/2.5/weather?q=${location}&units=${unit}&appid=969abeac77cc739597db7e76a82eb5e8`)
-        .then(updateWeatherData);
+      fetchLocation(
+        `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=${unit}&appid=969abeac77cc739597db7e76a82eb5e8`
+      )
+        .then(updateWeatherData)
+        .catch((error) =>
+          console.error("Error fetching weather data:", error)
+        );
     }
   }, [location, unit]);
 
   useEffect(() => {
     if (lat && lon) {
-      fetchLocation(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${unit}&appid=969abeac77cc739597db7e76a82eb5e8`)
+      fetchLocation(
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${unit}&appid=969abeac77cc739597db7e76a82eb5e8`
+      )
         .then(({ list: forecastList }) => {
           const uniqueDays = Array.from(new Set(forecastList.map(item => item.dt_txt.split(" ")[0])))
             .map(date => forecastList.find(item => item.dt_txt.startsWith(date)));
           setList(uniqueDays);
-        });
+        })
+        .catch((error) =>
+          console.error("Error fetching forecast data:", error)
+        );
     }
   }, [lat, lon, unit]);
 
-  const contextValue = useMemo(() => ({
-    ...weatherData,
-    list,
-    unit,
-    setUnit,
-    location,
-    setLocation,
-    lat,
-    lon,
-    locationArray,
-    getCurrentLocation,
-  }), [weatherData, list, unit, location, lat, lon, locationArray]);
+  const contextValue = useMemo(
+    () => ({
+      ...weatherData,
+      list,
+      unit,
+      setUnit,
+      location,
+      setLocation,
+      lat,
+      lon,
+      locationArray,
+      getCurrentLocation,
+    }),
+    [weatherData, list, unit, location, lat, lon, locationArray]
+  );
 
   return (
     <DataContext.Provider value={contextValue}>
