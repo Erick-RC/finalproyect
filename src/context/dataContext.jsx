@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, useMemo } from "react";
 
 export const DataContext = createContext(null);
 
-const API_KEY = "969abeac77cc739597db7e76a82eb5e8"
+const API_KEY = "969abeac77cc739597db7e76a82eb5e8";
 
 export const DataContextProvider = ({ children }) => {
   const [unit, setUnit] = useState("metric");
@@ -21,7 +21,7 @@ export const DataContextProvider = ({ children }) => {
     todays: "",
   });
   const [list, setList] = useState([]);
-  const [location, setLocation] = useState("New York"); 
+  const [location, setLocation] = useState("New York");
   const [locationArray, setLocationArray] = useState(() =>
     JSON.parse(localStorage.getItem("locations")) || []
   );
@@ -62,7 +62,7 @@ export const DataContextProvider = ({ children }) => {
   };
 
   const updateWeatherData = (data) => {
-    if (!data) return; 
+    if (!data) return;
     setWeatherData((prevData) => ({
       ...prevData,
       temp: Math.round(data.main.temp),
@@ -78,6 +78,14 @@ export const DataContextProvider = ({ children }) => {
     }));
     setLat(data.coord.lat);
     setLon(data.coord.lon);
+  };
+
+  const updateForecastData = (data) => {
+    if (!data || !data.list) return;
+    const forecastList = data.list;
+    const uniqueDays = Array.from(new Set(forecastList.map(item => item.dt_txt.split(" ")[0])))
+      .map(date => forecastList.find(item => item.dt_txt.startsWith(date)));
+    setList(uniqueDays);
   };
 
   const getCurrentLocation = () => {
@@ -121,13 +129,17 @@ export const DataContextProvider = ({ children }) => {
   useEffect(() => {
     if (lat && lon) {
       fetchLocation(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=${unit}&appid=${API_KEY}`
+      )
+        .then(updateWeatherData)
+        .catch((error) =>
+          console.error("Error fetching weather data:", error)
+        );
+
+      fetchLocation(
         `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${unit}&appid=${API_KEY}`
       )
-        .then(({ list: forecastList }) => {
-          const uniqueDays = Array.from(new Set(forecastList.map(item => item.dt_txt.split(" ")[0])))
-            .map(date => forecastList.find(item => item.dt_txt.startsWith(date)));
-          setList(uniqueDays);
-        })
+        .then(updateForecastData)
         .catch((error) =>
           console.error("Error fetching forecast data:", error)
         );
