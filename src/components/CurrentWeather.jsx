@@ -36,7 +36,7 @@ export const CurrentWeather = () => {
       </nav>
       <section>
         <img
-          src="./public/background.png"
+          src="../public/background.png"
           alt="background"
           className="w-full opacity-5 absolute bg-cover bg-center left-0"
         />
