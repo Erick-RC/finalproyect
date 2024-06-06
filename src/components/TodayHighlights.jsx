@@ -26,13 +26,13 @@ export const TodayHighlights = () => {
       <div className="w-full">
         <div className="flex justify-end m-[30px]">
           <button
-            className={`w-8 h-8 rounded-full text-gray-100 ${isMetric ? "bg-gray-100 text-black" : "bg-gray-500"}`}
+            className={`w-8 h-8 rounded-full text-gray-100 ${isMetric ? "bg-gray-400 text-black" : "bg-gray-500"}`}
             onClick={() => setUnit("metric")}
           >
             &#8451;
           </button>
           <button
-            className={`w-8 h-8 rounded-full text-gray-100 ml-4 ${!isMetric ? "bg-gray-100 text-black" : "bg-gray-500"}`}
+            className={`w-8 h-8 rounded-full text-gray-100 ml-4 ${!isMetric ? "bg-gray-400 text-black" : "bg-gray-500"}`}
             onClick={() => setUnit("imperial")}
           >
             &#8457;
@@ -105,20 +105,29 @@ const HighlightCard = ({ title, value, unit, extra }) => (
   </div>
 );
 
-const HumidityIndicator = ({ humidity }) => (
-  <div className="w-full mt-5 text-gray-100">
-    <span className="flex justify-between text-base">
-      <p>0</p>
-      <p>50</p>
-      <p>100</p>
-    </span>
-    <span className="w-full bg-slate-100 h-3 mt-2 block rounded-2xl relative" style={{ maxWidth: "300px" }}>
+const HumidityIndicator = ({ humidity }) => {
+  const humidityPercentage = `${humidity}%`;
+  const backgroundStyle = {
+    backgroundImage: `linear-gradient(to right, rgba(255, 255, 0, 0.6) ${humidityPercentage}, transparent ${humidityPercentage})`,
+    maxWidth: "300px"
+  };
+
+  return (
+    <div className="w-full mt-5 text-gray-100">
+      <span className="flex justify-between text-base">
+        <p>0</p>
+        <p>50</p>
+        <p>100</p>
+      </span>
       <span
-        className="block h-full min-w-[300px] rounded-2xl after:content-['%'] after:absolute after:right-0 after:top-3 after:text-[12px] after:text-gray-500"
-        style={{ backgroundColor: "#FFEC65", width: `${humidity}%` }}
-      ></span>
-    </span>
-  </div>
-);
-
-
+        className="w-full bg-slate-100 h-3 mt-2 block rounded-2xl relative"
+        style={backgroundStyle}
+      >
+        <span
+          className="block h-full min-w-[300px] rounded-2xl after:content-['%'] after:absolute after:right-0 after:top-3 after:text-[12px] after:text-gray-500"
+          style={{ width: humidityPercentage }}
+        ></span>
+      </span>
+    </div>
+  );
+};

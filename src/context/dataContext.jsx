@@ -9,16 +9,8 @@ export const DataContextProvider = ({ children }) => {
   const [lat, setLat] = useState("");
   const [lon, setLon] = useState("");
   const [weatherData, setWeatherData] = useState({
-    temp: 0,
-    description: "",
-    iconId: "",
-    windStatus: "",
-    windDegree: "",
-    windDirection: "",
-    visibility: "",
-    humidity: "",
-    airPressure: "",
-    todays: "",
+    temp: 0, description: "", iconId: "", windStatus: "", windDegree: "", windDirection: "",
+    visibility: "", humidity: "", airPressure: "", todays: ""
   });
   const [list, setList] = useState([]);
   const [location, setLocation] = useState("New York");
@@ -28,32 +20,15 @@ export const DataContextProvider = ({ children }) => {
 
   const getDay = (timestamp) =>
     new Date(timestamp * 1000).toUTCString().split(" ").slice(0, 3).join(" ");
+
   const degToCompass = (num) =>
-    [
-      "N",
-      "NNE",
-      "NE",
-      "ENE",
-      "E",
-      "ESE",
-      "SE",
-      "SSE",
-      "S",
-      "SSW",
-      "SW",
-      "WSW",
-      "W",
-      "WNW",
-      "NW",
-      "NNW",
-    ][Math.floor((num / 22.5) + 0.5) % 16];
+    ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW",
+      "W", "WNW", "NW", "NNW"][Math.floor((num / 22.5) + 0.5) % 16];
 
   const fetchLocation = async (url) => {
     try {
       const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
+      if (!response.ok) throw new Error("Network response was not ok");
       return await response.json();
     } catch (error) {
       console.error(error);
@@ -63,21 +38,21 @@ export const DataContextProvider = ({ children }) => {
 
   const updateWeatherData = (data) => {
     if (!data) return;
-    setWeatherData((prevData) => ({
-      ...prevData,
-      temp: Math.round(data.main.temp),
-      description: data.weather[0].main,
-      iconId: data.weather[0].icon,
-      windStatus: data.wind.speed.toFixed(1),
-      windDegree: data.wind.deg,
-      windDirection: degToCompass(data.wind.deg),
-      visibility: data.visibility,
-      humidity: data.main.humidity,
-      airPressure: data.main.pressure,
-      todays: getDay(data.dt),
-    }));
-    setLat(data.coord.lat);
-    setLon(data.coord.lon);
+    const { main, weather, wind, visibility, coord, dt } = data;
+    setWeatherData({
+      temp: Math.round(main.temp),
+      description: weather[0].main,
+      iconId: weather[0].icon,
+      windStatus: wind.speed.toFixed(1),
+      windDegree: wind.deg,
+      windDirection: degToCompass(wind.deg),
+      visibility,
+      humidity: main.humidity,
+      airPressure: main.pressure,
+      todays: getDay(dt),
+    });
+    setLat(coord.lat);
+    setLon(coord.lon);
   };
 
   const updateForecastData = (data) => {
@@ -128,37 +103,21 @@ export const DataContextProvider = ({ children }) => {
 
   useEffect(() => {
     if (lat && lon) {
-      fetchLocation(
+      const fetchWeatherData = () => fetchLocation(
         `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=${unit}&appid=${API_KEY}`
-      )
-        .then(updateWeatherData)
-        .catch((error) =>
-          console.error("Error fetching weather data:", error)
-        );
+      ).then(updateWeatherData);
 
-      fetchLocation(
+      const fetchForecastData = () => fetchLocation(
         `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${unit}&appid=${API_KEY}`
-      )
-        .then(updateForecastData)
-        .catch((error) =>
-          console.error("Error fetching forecast data:", error)
-        );
+      ).then(updateForecastData);
+
+      fetchWeatherData();
+      fetchForecastData();
     }
   }, [lat, lon, unit]);
 
   const contextValue = useMemo(
-    () => ({
-      ...weatherData,
-      list,
-      unit,
-      setUnit,
-      location,
-      setLocation,
-      lat,
-      lon,
-      locationArray,
-      getCurrentLocation,
-    }),
+    () => ({...weatherData,list,unit,setUnit,location,setLocation,lat,lon,locationArray,getCurrentLocation,}),
     [weatherData, list, unit, location, lat, lon, locationArray]
   );
 
