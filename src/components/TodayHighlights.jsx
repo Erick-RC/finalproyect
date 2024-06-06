@@ -106,17 +106,19 @@ const HighlightCard = ({ title, value, unit, extra }) => (
 );
 
 const HumidityIndicator = ({ humidity }) => (
-  <div className="w-[70%] mt-5 text-gray-100">
+  <div className="w-full mt-5 text-gray-100">
     <span className="flex justify-between text-base">
       <p>0</p>
       <p>50</p>
       <p>100</p>
     </span>
-    <span className="w-full bg-slate-100 h-3 mt-2 block rounded-2xl relative">
+    <span className="w-full bg-slate-100 h-3 mt-2 block rounded-2xl relative" style={{ maxWidth: "300px" }}>
       <span
-        className="block h-full rounded-2xl after:content-['%'] after:absolute after:right-0 after:top-3 after:text-[12px] after:text-gray-500"
+        className="block h-full min-w-[300px] rounded-2xl after:content-['%'] after:absolute after:right-0 after:top-3 after:text-[12px] after:text-gray-500"
         style={{ backgroundColor: "#FFEC65", width: `${humidity}%` }}
       ></span>
     </span>
   </div>
 );
+
+
