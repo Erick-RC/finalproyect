@@ -39,18 +39,23 @@ export const DataContextProvider = ({ children }) => {
   const updateWeatherData = (data) => {
     if (!data) return;
     const { main, weather, wind, visibility, coord, dt } = data;
-    setWeatherData({
+    const updatedWeatherData = {
       temp: Math.round(main.temp),
       description: weather[0].main,
       iconId: weather[0].icon,
-      windStatus: wind.speed.toFixed(1),
-      windDegree: wind.deg,
-      windDirection: degToCompass(wind.deg),
       visibility,
       humidity: main.humidity,
       airPressure: main.pressure,
       todays: getDay(dt),
-    });
+    };
+  
+    if (wind) {
+      updatedWeatherData.windStatus = wind.speed.toFixed(1);
+      updatedWeatherData.windDegree = wind.deg;
+      updatedWeatherData.windDirection = degToCompass(wind.deg);
+    }
+  
+    setWeatherData(updatedWeatherData);
     setLat(coord.lat);
     setLon(coord.lon);
   };
